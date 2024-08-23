@@ -7,6 +7,8 @@ defmodule OnlineStore.Catalog do
   alias OnlineStore.Repo
 
   alias OnlineStore.Catalog.Product
+  # alias OnlineStore.Catalog.Category
+  alias OnlineStore.Catalog.Category
 
   @doc """
   Returns the list of products.
@@ -35,7 +37,10 @@ defmodule OnlineStore.Catalog do
       ** (Ecto.NoResultsError)
 
   """
-  def get_product!(id), do: Repo.get!(Product, id)
+  # def get_product!(id), do: Repo.get!(Product, id)
+  def get_product!(id) do
+    Product |> Repo.get!(id) |> Repo.preload(:categories)
+  end
 
   @doc """
   Creates a product.
@@ -51,7 +56,8 @@ defmodule OnlineStore.Catalog do
   """
   def create_product(attrs \\ %{}) do
     %Product{}
-    |> Product.changeset(attrs)
+    # |> Product.changeset(attrs)
+    |> change_product(attrs)
     |> Repo.insert()
   end
 
@@ -69,7 +75,8 @@ defmodule OnlineStore.Catalog do
   """
   def update_product(%Product{} = product, attrs) do
     product
-    |> Product.changeset(attrs)
+    # |> Product.changeset(attrs)
+    |> change_product(attrs)
     |> Repo.update()
   end
 
@@ -99,8 +106,19 @@ defmodule OnlineStore.Catalog do
 
   """
   def change_product(%Product{} = product, attrs \\ %{}) do
-    Product.changeset(product, attrs)
+    categories = list_categories_by_id(attrs["category_ids"])
+
+    product
+    |> Repo.preload(:categories)
+    |> Product.changeset(attrs)
+    |> Ecto.Changeset.put_assoc(:categories, categories)
   end
+
+  def list_categories_by_id(nil), do: []
+  def list_categories_by_id(category_ids) do
+    Repo.all(from c in Category, where: c.id in ^category_ids)
+  end
+
 
   def inc_page_views(%Product{} = product) do
     {1, [%Product{views: views}]} =
@@ -110,7 +128,7 @@ defmodule OnlineStore.Catalog do
       put_in(product.views, views)
   end
 
-  alias OnlineStore.Catalog.Category
+
 
   @doc """
   Returns the list of categories.
