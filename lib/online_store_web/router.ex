@@ -48,6 +48,8 @@ defmodule OnlineStoreWeb.Router do
     get "/cart", CartController, :show
     put "/cart", CartController, :update
     get "/", PageController, :home
+
+    resources "/orders", OrderController, only: [:create, :show]
   end
 
   # Other scopes may use custom stacks.
